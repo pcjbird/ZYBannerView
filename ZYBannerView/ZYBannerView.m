@@ -2,13 +2,13 @@
 //  ZYBannerView.m
 //
 //  Created by 张志延 on 15/10/17.
-//  Copyright (c) 2015年 tongbu. All rights reserved.
+//  Copyright (c) 2015 年 tongbu. All rights reserved.
 //
 
 #import "ZYBannerView.h"
 #import "ZYBannerCell.h"
 
-// 总共的item数
+// 总共的 item 数
 #define ZY_TOTAL_ITEMS (self.itemCount * 10000)
 
 #define ZY_FOOTER_WIDTH 64.0
@@ -66,17 +66,29 @@ static NSString *banner_footer = @"banner_footer";
     [self updateSubviewsFrame];
 }
 
+- (BOOL)isRTL
+{
+    return [UIView userInterfaceLayoutDirectionForSemanticContentAttribute:UISemanticContentAttributeUnspecified] == UIUserInterfaceLayoutDirectionRightToLeft;
+}
+
 - (void)updateSubviewsFrame
 {
     // collectionView
     self.flowLayout.itemSize = self.bounds.size;
-    self.flowLayout.footerReferenceSize = CGSizeMake(ZY_FOOTER_WIDTH, self.frame.size.height);
+    self.flowLayout.footerReferenceSize = self.showFooter ? CGSizeMake(ZY_FOOTER_WIDTH, self.frame.size.height) : CGSizeZero;
+    
+    self.collectionView.contentInset = UIEdgeInsetsZero;
+    if(self.showFooter)
+    {
+        UIEdgeInsets contentInset = [self isRTL] ? UIEdgeInsetsMake(0, -ZY_FOOTER_WIDTH, 0, 0) : UIEdgeInsetsMake(0, 0, 0, -ZY_FOOTER_WIDTH);
+        self.collectionView.contentInset = contentInset;
+    }
     self.collectionView.frame = self.bounds;
     [self.collectionView reloadData];
     
     // pageControl
     if (CGRectEqualToRect(self.pageControlFrame, CGRectZero)) {
-        // 若未对pageControl设置过frame, 则使用以下默认frame
+        // 若未对 pageControl 设置过 frame, 则使用以下默认 frame
         CGFloat w = self.frame.size.width;
         CGFloat h = ZY_PAGE_CONTROL_HEIGHT;
         CGFloat x = 0;
@@ -94,12 +106,12 @@ static NSString *banner_footer = @"banner_footer";
     }
     
     if (self.shouldLoop) {
-        // 总item数的中间
+        // 总 item 数的中间
         [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:(ZY_TOTAL_ITEMS / 2) inSection:0]
                                     atScrollPosition:UICollectionViewScrollPositionLeft animated:NO];
         [self didScrollItemAtIndex:0];
     } else {
-        // 第0个item
+        // 第 0 个 item
         [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0]
                                     atScrollPosition:UICollectionViewScrollPositionLeft animated:NO];
         [self didScrollItemAtIndex:0];
@@ -123,7 +135,7 @@ static NSString *banner_footer = @"banner_footer";
         return;
     }
     
-    // 设置pageControl总页数
+    // 设置 pageControl 总页数
     self.pageControl.numberOfPages = self.itemCount;
     
     // 刷新数据
@@ -177,7 +189,7 @@ static NSString *banner_footer = @"banner_footer";
                                             animated:YES];
     } else {
         if ((currentItem % self.itemCount) == self.itemCount - 1) {
-            // 当前最后一张, 回到第0张
+            // 当前最后一张，回到第 0 张
             [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0]
                                         atScrollPosition:UICollectionViewScrollPositionLeft
                                                 animated:YES];
@@ -223,7 +235,7 @@ static NSString *banner_footer = @"banner_footer";
         footer = [theCollectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionFooter withReuseIdentifier:banner_footer forIndexPath:theIndexPath];
         self.footer = (ZYBannerFooter *)footer;
         
-        // 配置footer的提示语
+        // 配置 footer 的提示语
         if ([self.dataSource respondsToSelector:@selector(banner:titleForFooterWithState:)]) {
             self.footer.idleTitle = [self.dataSource banner:self titleForFooterWithState:ZYBannerFooterStateIdle];
             self.footer.triggerTitle = [self.dataSource banner:self titleForFooterWithState:ZYBannerFooterStateTrigger];
@@ -283,10 +295,10 @@ static NSString *banner_footer = @"banner_footer";
     static CGFloat lastOffset;
     CGFloat footerDisplayOffset = (scrollView.contentOffset.x - (self.frame.size.width * (self.itemCount - 1)));
     
-    // footer的动画
+    // footer 的动画
     if (footerDisplayOffset > 0)
     {
-        // 开始出现footer
+        // 开始出现 footer
         if (footerDisplayOffset > ZY_FOOTER_WIDTH) {
             if (lastOffset > 0) return;
             self.footer.state = ZYBannerFooterStateTrigger;
@@ -304,7 +316,7 @@ static NSString *banner_footer = @"banner_footer";
 
     CGFloat footerDisplayOffset = (scrollView.contentOffset.x - (self.frame.size.width * (self.itemCount - 1)));
     
-    // 通知footer代理
+    // 通知 footer 代理
     if (footerDisplayOffset > ZY_FOOTER_WIDTH) {
         if ([self.delegate respondsToSelector:@selector(bannerFooterDidTrigger:)]) {
             [self.delegate bannerFooterDidTrigger:self];
@@ -353,11 +365,11 @@ static NSString *banner_footer = @"banner_footer";
 - (BOOL)shouldLoop
 {
     if (self.showFooter) {
-        // 如果footer存在就不应该有循环滚动
+        // 如果 footer 存在就不应该有循环滚动
         return NO;
     }
     if (self.itemCount <= 1) {
-        // 只有一个item也不应该有循环滚动
+        // 只有一个 item 也不应该有循环滚动
         return NO;
     }
     return _shouldLoop;
@@ -390,7 +402,7 @@ static NSString *banner_footer = @"banner_footer";
 - (BOOL)autoScroll
 {
     if (self.itemCount < 2) {
-        // itemCount小于2时, 禁用自动滚动
+        // itemCount 小于 2 时，禁用自动滚动
         return NO;
     }
     return _autoScroll;
@@ -473,17 +485,17 @@ static NSString *banner_footer = @"banner_footer";
     if (!_collectionView) {
         _collectionView = [[UICollectionView alloc] initWithFrame:self.bounds collectionViewLayout:self.flowLayout];
         _collectionView.pagingEnabled = YES;
-        _collectionView.alwaysBounceHorizontal = YES; // 小于等于一页时, 允许bounce
+        _collectionView.alwaysBounceHorizontal = YES; // 小于等于一页时，允许 bounce
         _collectionView.showsHorizontalScrollIndicator = NO;
         _collectionView.scrollsToTop = NO;
         _collectionView.backgroundColor = [UIColor groupTableViewBackgroundColor];
         _collectionView.delegate = self;
         _collectionView.dataSource = self;
         
-        // 注册cell
+        // 注册 cell
         [_collectionView registerClass:[ZYBannerCell class] forCellWithReuseIdentifier:banner_item];
         
-        // 注册 \ 配置footer
+        // 注册 \ 配置 footer
         [_collectionView registerClass:[ZYBannerFooter class] forSupplementaryViewOfKind:UICollectionElementKindSectionFooter withReuseIdentifier:banner_footer];
         _collectionView.contentInset = UIEdgeInsetsMake(0, 0, 0, -ZY_FOOTER_WIDTH);
     }
@@ -507,13 +519,13 @@ static NSString *banner_footer = @"banner_footer";
  */
 - (void)setPageControl:(UIPageControl *)pageControl
 {
-    // 移除旧oageControl
+    // 移除旧 oageControl
     [_pageControl removeFromSuperview];
     
     // 赋值
     _pageControl = pageControl;
     
-    // 添加新pageControl
+    // 添加新 pageControl
     _pageControl.userInteractionEnabled = NO;
     _pageControl.autoresizingMask = UIViewAutoresizingNone;
     _pageControl.backgroundColor = [UIColor redColor];
