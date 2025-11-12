@@ -8,6 +8,30 @@
 #import "ZYBannerView.h"
 #import "ZYBannerCell.h"
 
+@interface ZYWeakProxy : NSProxy
+@property (nonatomic, weak) id target;
++ (instancetype)proxyWithTarget:(id)target;
+@end
+
+@implementation ZYWeakProxy
++ (instancetype)proxyWithTarget:(id)target {
+    ZYWeakProxy *proxy = [ZYWeakProxy alloc];
+    proxy.target = target;
+    return proxy;
+}
+- (id)forwardingTargetForSelector:(SEL)selector {
+    return self.target;
+}
+- (NSMethodSignature *)methodSignatureForSelector:(SEL)selector {
+    return [(id)self.target methodSignatureForSelector:selector] ?: [NSMethodSignature signatureWithObjCTypes:"v@:"]; 
+}
+- (void)forwardInvocation:(NSInvocation *)invocation {
+    if ([(id)self.target respondsToSelector:invocation.selector]) {
+        [invocation invokeWithTarget:self.target];
+    }
+}
+@end
+
 // 总共的 item 数
 #define ZY_TOTAL_ITEMS (self.itemCount * 10000)
 
@@ -159,7 +183,8 @@ static NSString *banner_footer = @"banner_footer";
     
     [self stopTimer];
     
-    self.timer = [NSTimer scheduledTimerWithTimeInterval:self.scrollInterval target:self selector:@selector(autoScrollToNextItem) userInfo:nil repeats:YES];
+    id proxy = [ZYWeakProxy proxyWithTarget:self];
+    self.timer = [NSTimer scheduledTimerWithTimeInterval:self.scrollInterval target:proxy selector:@selector(autoScrollToNextItem) userInfo:nil repeats:YES];
     [[NSRunLoop currentRunLoop] addTimer:self.timer forMode:NSRunLoopCommonModes];
 }
 
@@ -549,6 +574,21 @@ static NSString *banner_footer = @"banner_footer";
     _pageControlFrame = pageControlFrame;
     
     self.pageControl.frame = pageControlFrame;
+}
+
+- (void)didMoveToWindow
+{
+    [super didMoveToWindow];
+    if (self.window && self.autoScroll) {
+        [self startTimer];
+    } else {
+        [self stopTimer];
+    }
+}
+
+- (void)dealloc
+{
+    [self stopTimer];
 }
 
 @end
